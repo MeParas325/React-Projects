@@ -1,5 +1,4 @@
 import Navbar from "./components/Navbar"
-import Model from "./components/Modal"
 import { FiSearch } from "react-icons/fi"
 import { AiFillPlusCircle } from "react-icons/ai"
 import { useEffect, useState } from "react"
@@ -16,6 +15,8 @@ import logo from "./images/contact.png"
 function App() {
 
   const [contacts, setcontacts] = useState([]);
+  const [searchContacts, setSearchContacts] = useState([])
+  const [isSearchEnable, setSearchEnable] = useState(false)
   const [isOpen, setIsOpen] = useState(false);
   const [isUpdate, setIsUpdate] = useState(false);
   const [name, setName] = useState("");
@@ -54,7 +55,6 @@ function App() {
 
       try {
         const contacts = collection(db, "contacts")
-        // const contactsSnapshot = await getDocs(contacts)
 
         onSnapshot(contacts, (snapshot) => {
 
@@ -75,6 +75,18 @@ function App() {
 
   }, [])
 
+  const getSearchContacts = (e) => {
+
+    setSearchContacts(contacts.filter((contact) => contact.name.toLowerCase().trim().includes(e.target.value.toLowerCase().trim())));
+
+    if(e.target.value.trim() === "") {
+      setSearchEnable(false)
+    } else {
+      setSearchEnable(true)
+    }
+
+  }
+
   return (
     <>
       <div className="max-w-[370px] mx-auto px-4">
@@ -83,12 +95,12 @@ function App() {
         <div className="flex gap-2">
           <div className="flex relative items-center flex-grow">
             <FiSearch className="text-white text-3xl absolute ml-1" />
-            <input type="text" className="focus:outline-none flex-grow h-10 border bg-transparent border-white rounded-md text-white pl-9" />
+            <input onChange={getSearchContacts} type="text" className="focus:outline-none flex-grow h-10 border bg-transparent border-white rounded-md text-white pl-9" />
           </div>
           <AiFillPlusCircle onClick={() => onOpen("add")} className="text-white text-5xl cursor-pointer" />
         </div> 
         <div className="mt-4 flex flex-col gap-4">
-          {
+        {  isSearchEnable === false ?
             contacts.map((contact) => {
               return <div key={contact.id} className="bg-yellow flex justify-between items-center p-2 rounded-lg ">
                 <div className="flex gap-2 items-center">
@@ -103,8 +115,27 @@ function App() {
                   <IoMdTrash onClick={() => deleteContact(contact.id)} className="text-orange" />
                 </div>
               </div>
-            })
-          }
+            }) : searchContacts.length > 0 ? searchContacts.map((contact) => {
+              return <div key={contact.id} className="bg-yellow flex justify-between items-center p-2 rounded-lg ">
+                <div className="flex gap-2 items-center">
+                <HiOutlineUserCircle className="text-orange text-3xl" />
+                <div className="font-bold">
+                  <h1 className="text-medium">{contact.name}</h1>
+                  <p className="text-sm">{contact.email}</p>
+                </div>
+                </div>
+                <div className="flex text-3xl">
+                  <RiEditCircleLine className="cursor-pointer"  onClick={() => onOpen("edit", contact.name, contact.email, contact.id)} />
+                  <IoMdTrash onClick={() => deleteContact(contact.id)} className="text-orange" />
+                </div>
+              </div>
+            }) : <div className="flex gap-2 justify-center items-center text-white">
+            <div>
+              <img className="h-[50px]" src={logo} alt="" />
+            </div>
+            <h1>Contacts not found</h1>
+            </div>
+          } 
         </div>
         {contacts.length == 0 && 
         <div className="flex gap-2 justify-center items-center text-white">
